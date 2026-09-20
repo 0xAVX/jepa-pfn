@@ -1,15 +1,13 @@
 # Novelty audit: where JEPAFN sits
 
 Literature cut-off: September 2026 (Papers With Code catalog + arXiv).
-Tab-AICL (arXiv:2603.27385, Mar 2026) was not in the PWC catalog at audit
-time; cited from its alphaXiv listing.
 
 ## 1. Closest prior work
 
 | Method | TabPFN | SSL repr. | Uncertainty reshapes repr. learning | Diversity for acquisition | Separate rank/coverage spaces |
 |---|:---:|:---:|:---:|:---:|:---:|
 | T-JEPA (2410.05016) † | — | ✓ | — | — | — |
-| Tab-AICL (2603.27385) | ✓ | — | — | ✓ | — |
+| Tab-AICL (Treerath & Pittorino, Mar 2026, arXiv:2603.27385) | ✓ | — | — | ✓ | — |
 | TCM / SSL+AL schedule (Doucet 2024) ¶ | — | ✓ | — | ✓ | — |
 | Less-is-More tabular SSL (Springer 2026) ‡ | — | ✓ | — | ✓ | — |
 | UA-Tab (SciDirect 2026) § | — | ✓ | ✓ | — | — |
@@ -48,7 +46,10 @@ useful as a geometry (+0.086 feature selection, guided-mix wins).**
 
 ## 4. Claims we do / do not make
 
-We do NOT claim: first uncertainty+diversity AL; first TabPFN AL;
+We do NOT claim: first uncertainty+diversity AL (Tab-AICL's Margin/Coreset/
+Hybrid/Proxy-Hybrid rules already combine TabPFN uncertainty with diversity
+on fixed spaces, evaluated as cold-start AULC on 20 benchmarks);
+first TabPFN active learning method;
 first self-supervised AL; first uncertainty-aware tabular SSL.
 
 We DO contribute: TabPFN predictive uncertainty as feedback into JEPA
