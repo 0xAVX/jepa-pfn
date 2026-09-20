@@ -1,0 +1,11 @@
+[project]
+name = "pfn-jepa"
+version = "0.1.0"
+description = "PFN-JEPA: TabPFN-3.5 tells a JEPA world model what it doesn't know; JEPA learns it label-free and feeds it back"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "Apache-2.0" }
+dependencies = ["tabpfn>=3.0", "pandas", "numpy", "scikit-learn", "torch", "flask", "scipy"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
