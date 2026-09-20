@@ -24,8 +24,20 @@ model.predict_proba(X_test)
 model.explain_uncertainty(X.iloc[[42]])
 ```
 
-## Label-budget curves (`figs/budget.csv`: random vs entropy vs raw-kcenter
-vs jepa-kcenter vs guided-mix, 5–100% of pool)
+## Mechanism (`figs/mechanism.csv`)
+
+**Rep-swap** (same k-center rule, 5 geometries): no space dominates. Uniform
+JEPA is the best *map* (phoneme 0.9392 @20%, 0.9613 @40% — top both), guided
+JEPA never wins pure diversity, TabPFN-embeddings fade with budget, NATICUS
+is tied everywhere. Guidance is the better *compass* (ranking for the mix),
+uniformity the better map. Map vs compass.
+
+**Poison pool** (phoneme, 10% flipped labels, 10% budget): corruption selected
+is ~equal across strategies (7.6–9.1%) — yet entropy collapses to AUC 0.365
+while diversity methods hold 0.86–0.90. Entropy's failure is *not* "selects
+more corrupted points"; it concentrates labeling on low-margin regions where
+noise is fatal, while diversity spreads the risk. JEPA k-center selects the
+fewest corrupted (7.6%). Epistemic value ≠ ambiguity.
 
 - **Entropy sampling collapses at low budgets** — s6e9 5%: 0.581, phoneme
   10%: 0.487 (below chance). Pure TabPFN uncertainty picks unlearnable rows.
