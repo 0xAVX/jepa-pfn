@@ -16,6 +16,10 @@ TabPFN-3.5. Three measured findings:
 MC latent completion was **removed from the architecture** (not just ablated):
 masked completions go out-of-distribution at inference (phoneme -0.015).
 
+Prior-art position: [docs/novelty.md](docs/novelty.md) — we do not claim
+first uncertainty+diversity or first TabPFN active learning; we claim TabPFN
+uncertainty reshaping JEPA plus separated rank/coverage acquisition.
+
 ```python
 from pfn_jepa.estimator import PFNJEPAClassifier
 model = PFNJEPAClassifier(d_lat=64, epochs=10)  # mc removed; see figs/ablation.csv
