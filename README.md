@@ -57,12 +57,34 @@ So the refined claim: guided representations don't beat random sampling in
 general — they beat it where sampling is actually hard, and entropy alone
 fails catastrophically everywhere at low budgets.
 
+## Exhibits (`figs/exhibits_feat.csv`, `figs/exhibits_aps.csv`)
+
+**MADELON** (500 feats, ~20 signal): relevance direction depends on the
+generator. Mask-sensitivity ranks *predictability* — on NATICUS that is
+redundancy (top wins +0.086); on MADELON the XOR-type signal is unpredictable
+by design, so the ranking inverts: bottom-50 0.877 vs top-50 0.554, bottom-100
+0.950 vs top-100 0.718. Predictability ≈ redundancy; unpredictability ≈
+signal. The demo-worthy twist: a "flip the ranking" toggle.
+
+**APS Failure** (60k×170, 1.7% positives, real missingness; PR-AUC/recall):
+
+| budget | random | entropy | jepa-kcenter | guided-mix |
+|---|---|---|---|---|
+| 1% PR / recall | 0.543 / 0.29 | 0.370 / 0.58 | 0.806 / 0.67 | **0.830 / 0.70** |
+| 2% PR / recall | 0.742 / 0.42 | 0.801 / 0.70 | **0.861** / 0.72 | 0.849 / **0.74** |
+| 10% PR / recall | 0.795 / 0.42 | 0.920 / 0.75 | 0.914 / 0.77 | **0.921** / 0.76 |
+
+Operational read: at 1% (200 inspections) guided-mix finds 91 failures vs
+random's 3. Entropy discovers positives (100–316) but ranks them poorly until
+budgets grow — discovery without ranking.
+
 ## Reproduce
 
 ```bash
 <venv-python> -m pytest tests/ -q
 <venv-python> experiments/run_matrix.py   # augmentation ladder x datasets
 <venv-python> experiments/selection.py    # label-budget curves x strategies
+<venv-python> experiments/exhibits.py     # MADELON retention + APS acquisition
 <venv-python> demo/app.py                 # interactive ladder + uncertainty
 ```
 
