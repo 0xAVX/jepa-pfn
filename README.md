@@ -43,6 +43,8 @@ more corrupted points"; it concentrates labeling on low-margin regions where
 noise is fatal, while diversity spreads the risk. JEPA k-center selects the
 fewest corrupted (7.6%). Epistemic value ≠ ambiguity.
 
+![poison stress test](figs/poison.png)
+
 - **Entropy sampling collapses at low budgets** — s6e9 5%: 0.581, phoneme
   10%: 0.487 (below chance). Pure TabPFN uncertainty picks unlearnable rows.
   Any uncertainty-only baseline is disqualified by its own numbers.
@@ -56,6 +58,11 @@ fewest corrupted (7.6%). Epistemic value ≠ ambiguity.
 So the refined claim: guided representations don't beat random sampling in
 general — they beat it where sampling is actually hard, and entropy alone
 fails catastrophically everywhere at low budgets.
+
+![label-budget curves](figs/budget_curves.png)
+
+Phoneme (hard) at 40%: random 0.9464, entropy 0.9529, raw-kcenter 0.9551,
+jepa-kcenter 0.9590, guided-mix **0.9646**.
 
 ## Exhibits (`figs/exhibits_feat.csv`, `figs/exhibits_aps.csv`)
 
@@ -105,3 +112,5 @@ catastrophic on phoneme (-0.015, masked latents go OOD).
 Surviving headline: PFN guidance systematically repairs unguided JEPA;
 wide-data *selection* (not augmentation) is where the plug wins outright
 (NATICUS top-24 +0.086 over random, zero labels).
+
+![ablation ladder](figs/ablation.png)
