@@ -1,7 +1,0 @@
-tabpfn>=3.0
-pandas
-numpy
-scikit-learn
-torch
-flask
-scipy
