@@ -12,9 +12,7 @@ import numpy as np
 import pandas as pd
 from sklearn.model_selection import StratifiedKFold
 
-import sys
-sys.path.insert(0, "/home/dead/playground-series-s6e9")
-from src.ev import tabpfn_predict_proba
+from pfn_jepa.data import tabpfn_predict_proba
 
 
 def oof_uncertainty(X: pd.DataFrame, y: np.ndarray, n_splits=5, seed=0,

@@ -11,7 +11,6 @@ import numpy as np
 from flask import Flask, request, render_template_string
 
 ROOT = Path(__file__).resolve().parent.parent
-sys.path.insert(0, "/home/dead/pfn-jepa/src")
 
 D = np.load(ROOT / "figs" / "demo.npz")
 P = np.load(ROOT / "figs" / "poison_demo.npz") if (ROOT / "figs" / "poison_demo.npz").exists() else None
@@ -27,7 +26,7 @@ ABL = [
     ("Guided feature masks", "✓ repaired 3/4", "good"),
     ("MC completion", "✗ removed after −0.015 on phoneme", "bad"),
     ("Guided-mix selection", "✓ only method beating random on hard data", "good"),
-    ("Feature selection", "✓ +0.086 over random on NATICUS", "good"),
+    ("Feature selection", "✓ +0.082 over random on NATICUS", "good"),
 ]
 
 app = Flask(__name__)
@@ -57,9 +56,10 @@ Overlay: <select name=o><option value="sel" {{'selected' if o=='sel'}}>selection
 <h2>Corrupted selected</h2>
 <ul>{% for s, f, a in rows %}<li><b>{{s}}</b>: {{'%.1f' % (100*f)}}% corrupted → AUC {{'%.3f' % a}}</li>{% endfor %}</ul>
 {{svg|safe}}
-<p><b>The reveal:</b> every strategy selects ~8% corruption — yet entropy collapses to
-{{'%.3f' % ent_auc}} while diversity holds {{'%.3f' % div_auc}}+.
-Failure is <i>where</i> corruption lands (fragile low-margin regions), not <i>how much</i>.</p>
+<p><b>Observation:</b> every strategy selects ~8–10% corruption, yet outcomes
+spread from {{'%.3f' % ent_auc}} (entropy) to {{'%.3f' % div_auc}}+ (diversity).
+Same quantity, different placement — concentration in fragile low-margin
+regions hurts more than the corruption rate alone suggests.</p>
 """ + STYLE
 
 MAP = NAV + """

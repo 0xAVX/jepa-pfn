@@ -14,11 +14,8 @@ import numpy as np
 import pandas as pd
 
 from .crossfit import oof_uncertainty
-from .jepa import diagnostics, embed, prep, relevance, train_plug
-
-import sys
-sys.path.insert(0, "/home/dead/playground-series-s6e9")
-from src.ev import tabpfn_predict_proba
+from .data import tabpfn_predict_proba
+from .jepa import diagnostics, embed, prep, prep_apply, prep_fit, relevance, train_plug
 
 
 class PFNJEPAClassifier:
@@ -58,6 +55,8 @@ class PFNJEPAClassifier:
         fp = None if sens is None else (0.1 + 0.8 * sens / (sens.max() + 1e-12))
         # Stage 2: JEPA with PFN-guided curriculum
         Xp, _ = prep(X)
+        self.prep_ = prep_fit(X)
+        Xp, _ = prep_apply(X, self.prep_)
         self.net_, self.dev_ = train_plug(
             Xp, epochs=self.epochs, d_lat=self.d_lat, mask_ratio=self.mask_ratio,
             row_weights=w, feat_probs=fp, seed=self.seed)
@@ -78,7 +77,7 @@ class PFNJEPAClassifier:
 
     def predict_proba(self, X: pd.DataFrame) -> np.ndarray:
         X = X.reset_index(drop=True)
-        Xp, _ = prep(X[self.feats_])
+        Xp, _ = prep_apply(X[self.feats_], self.prep_)
         Xa = self._augment(X[self.feats_], Xp)
         # align columns to train augmentation
         for c in self.train_aug_.columns:
@@ -107,7 +106,7 @@ class PFNJEPAClassifier:
 
     def explain_uncertainty(self, X: pd.DataFrame) -> dict:
         X = X.iloc[[0]].reset_index(drop=True)
-        Xp, _ = prep(X[self.feats_])
+        Xp, _ = prep_apply(X[self.feats_], self.prep_)
         p = self.predict_proba(X)[0, 1]
         ent = float(-(p * np.log(p + 1e-9) + (1 - p) * np.log(1 - p + 1e-9)))
         d = diagnostics(self.net_, self.dev_, Xp).iloc[0].to_dict()

@@ -12,14 +12,9 @@ import pandas as pd
 from sklearn.metrics import average_precision_score, roc_auc_score
 from sklearn.model_selection import train_test_split
 
-sys.path.insert(0, "/home/dead/pfn-jepa/src")
-sys.path.insert(0, "/home/dead/pfn-jepa/experiments")
-sys.path.insert(0, "/home/dead/playground-series-s6e9")
-from pfn_jepa.crossfit import oof_uncertainty
+from pfn_jepa.data import kcenter, tabpfn_predict_proba
 from pfn_jepa.estimator import PFNJEPAClassifier
 from pfn_jepa.jepa import embed, prep, relevance, train_plug
-from selection import kcenter
-from src.ev import tabpfn_predict_proba
 
 SEED = 0
 rng = np.random.RandomState(0)
@@ -92,28 +87,46 @@ def aps_acquire():
     Xtr, ytr, Xte, yte = load_aps()
     print(f"train={Xtr.shape} pos_rate={ytr.mean():.4f} test={Xte.shape}",
           flush=True)
-    # pool 20k from train, fixed test
+    # pool 20k from train, fixed test; 5% seed labeled, rest ranked unlabeled
     idx = np.random.RandomState(SEED).choice(len(Xtr), 20000, replace=False)
     Xpool, ypool = Xtr.iloc[idx].reset_index(drop=True), ytr[idx]
-    u = oof_uncertainty(Xpool, ypool, seed=SEED)
-    ent = u["entropy"].values
+    sidx = []
+    for k in (0, 1):
+        kk = np.where(ypool == k)[0]
+        sidx += np.random.RandomState(SEED).choice(
+            kk, max(5, int(0.01 * len(ypool) * (ypool == k).mean())),
+            replace=False).tolist()
+    sidx = np.array(sidx)
+    unl = np.array([i for i in range(len(ypool)) if i not in set(sidx)])
+    n_seed = len(sidx)
+    from tabpfn import TabPFNClassifier
+    seed_clf = TabPFNClassifier(random_state=SEED)
+    seed_clf.fit(Xpool.iloc[sidx], ypool[sidx])
+    p_all = np.clip(seed_clf.predict_proba(Xpool)[:, 1], 1e-6, 1 - 1e-6)
+    ent_all = -(p_all * np.log(p_all) + (1 - p_all) * np.log(1 - p_all))
+    ent = ent_all[unl]
     est = PFNJEPAClassifier(d_lat=32, epochs=5, seed=SEED)
     est.feats_ = Xpool.columns.tolist()
-    sens = est._sensitivity(Xpool.fillna(0), ypool, n=300)
+    sens = est._sensitivity(Xpool.iloc[sidx].fillna(0), ypool[sidx],
+                            n=min(300, len(sidx)))
     fp = 0.1 + 0.8 * sens / (sens.max() + 1e-12)
-    w = 1 + 2.0 * (ent / ent.max())
+    w = 1 + 2.0 * (ent_all / ent_all.max())
     Xp, _ = prep(Xpool.fillna(0))
     net, dev = train_plug(Xp, epochs=5, d_lat=32, row_weights=w, feat_probs=fp,
                           seed=SEED)
-    Z = embed(net, dev, Xp)
+    Z = embed(net, dev, Xp)[unl]
     rows = []
+    pos = np.argsort(-ent)
     for b in [0.01, 0.02, 0.05, 0.10]:
-        k = max(50, int(len(ypool) * b))
-        top = np.argsort(-ent)[:max(k, min(2000, len(ypool)))]
-        sels = {"random": rng.choice(len(ypool), k, replace=False),
-                "entropy": np.argsort(-ent)[:k],
-                "jepa-kcenter": kcenter(Z, k),
-                "guided-mix": top[kcenter(Z[top], k)]}
+        k = max(n_seed + 25, int(len(ypool) * b))
+        need = k - n_seed
+        take = lambda s: np.concatenate([sidx, unl[s]])
+        top = pos[:max(need, min(2000, len(unl)))]
+        sels = {"random": take(np.random.RandomState(1).choice(len(unl), need,
+                                                               replace=False)),
+                "entropy": take(pos[:need]),
+                "jepa-kcenter": take(kcenter(Z, need)),
+                "guided-mix": take(top[kcenter(Z[top], need)])}
         for sname, sel in sels.items():
             p = tabpfn_predict_proba(Xpool.iloc[sel], ypool[sel], Xte, seed=SEED)
             pr = average_precision_score(yte, p)

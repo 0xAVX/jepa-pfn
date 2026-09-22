@@ -5,7 +5,6 @@ Caps keep the 8GB card happy. Usage: <venv-python> experiments/run_matrix.py
 """
 from __future__ import annotations
 
-import sys
 import time
 import traceback
 from pathlib import Path
@@ -14,12 +13,9 @@ import numpy as np
 import pandas as pd
 from sklearn.metrics import roc_auc_score
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import LabelEncoder, OrdinalEncoder
 
-sys.path.insert(0, "/home/dead/pfn-jepa/src")
-sys.path.insert(0, "/home/dead/playground-series-s6e9")
+from pfn_jepa.data import load_s6e9, openml_binary, stratified_subsample, tabpfn_predict_proba
 from pfn_jepa.estimator import PFNJEPAClassifier
-from src.ev import load, stratified_subsample, tabpfn_predict_proba
 
 SEED = 0
 
@@ -32,29 +28,10 @@ CONFIGS = [
 ]
 
 
-def openml_binary(name, target=None):
-    from sklearn.datasets import fetch_openml
-    d = fetch_openml(name=name, as_frame=True, parser="auto")
-    X, y = d.data.copy(), d.target if target is None else d.data[target].copy()
-    if target is not None:
-        X = X.drop(columns=[target])
-    cat = [c for c in X.columns if str(X[c].dtype) in ("category", "object")]
-    num = [c for c in X.columns if c not in cat]
-    if cat:
-        enc = OrdinalEncoder(handle_unknown="use_encoded_value", unknown_value=-1)
-        X[cat] = enc.fit_transform(X[cat].astype(str))
-    X[num] = X[num].apply(pd.to_numeric, errors="coerce")
-    X = X.fillna(X.median(numeric_only=True)).fillna(-1)
-    y = LabelEncoder().fit_transform(pd.Series(y).astype(str).values)
-    if y.mean() > 0.5:
-        y = 1 - y
-    return X.reset_index(drop=True), y
-
-
 def get_datasets():
     out = {}
     try:
-        X, y, _, _, _ = load("/home/dead/playground-series-s6e9/data")
+        X, y, _, _, _ = load_s6e9("data")
         Xs, ys = stratified_subsample(X, y, 12_000, seed=SEED)
         out["s6e9-12k"] = (Xs, ys)
     except Exception as e:

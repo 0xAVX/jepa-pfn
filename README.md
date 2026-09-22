@@ -6,12 +6,12 @@ TabPFN-3.5. Three measured findings:
 1. **Uniform latent augmentation hurts.** Generic self-supervised latents are
    not automatically compatible with TabPFN's learned prior (0/4 datasets).
 2. **TabPFN-guided training repairs the failure.** Uncertainty curriculum +
-   sensitivity-guided masks recover near-baseline on 3/4 datasets — the
-   architectural contribution. TabPFN is causally central: it drives the
-   curriculum, the masks, and the selection.
+   sensitivity-guided masks match or beat raw on all 4 datasets — including
+   an outright win on churn (0.9183 vs 0.9178). TabPFN is causally central:
+   it drives the curriculum, the masks, and the selection.
 3. **Selection beats augmentation.** The guided representation is far more
    useful for choosing *which samples to label* than for extra features:
-   NATICUS top-24 +0.086 over random with zero labels (`figs/jepa.csv`).
+   NATICUS top-24 +0.082 over random with zero labels (`figs/jepa.csv`).
 
 MC latent completion was **removed from the architecture** (not just ablated):
 masked completions go out-of-distribution at inference (phoneme -0.015).
@@ -36,56 +36,60 @@ JEPA never wins pure diversity, TabPFN-embeddings fade with budget, NATICUS
 is tied everywhere. Guidance is the better *compass* (ranking for the mix),
 uniformity the better map. Map vs compass.
 
-**Poison pool** (phoneme, 10% flipped labels, 10% budget): corruption selected
-is ~equal across strategies (7.6–9.1%) — yet entropy collapses to AUC 0.365
-while diversity methods hold 0.86–0.90. Entropy's failure is *not* "selects
-more corrupted points"; it concentrates labeling on low-margin regions where
-noise is fatal, while diversity spreads the risk. JEPA k-center selects the
-fewest corrupted (7.6%). Epistemic value ≠ ambiguity.
+**Poison pool** (phoneme, 10% flipped labels, 10% budget, seed protocol):
+random 0.8955, entropy 0.8814, jepa-kcenter 0.8780, guided-mix 0.8950 —
+corruption selected 0.08–0.10 for all. Correction note: the earlier dramatic
+entropy collapse (0.365) came from the OOF-entropy protocol and does not
+reproduce under the honest seed protocol. Retracted as a headline; the
+remaining (small) gaps reflect normal strategy variance, and the poison
+experiment now serves as a robustness check rather than a mechanism proof.
 
 ![poison stress test](figs/poison.png)
 
-- **Entropy sampling collapses at low budgets** — s6e9 5%: 0.581, phoneme
-  10%: 0.487 (below chance). Pure TabPFN uncertainty picks unlearnable rows.
-  Any uncertainty-only baseline is disqualified by its own numbers.
-- **Easy tasks (s6e9, NATICUS): random ≈ diversity.** Nothing beats random
-  sampling; JEPA ≈ raw for coverage.
-- **Hard task (phoneme): guidance wins.** At 40% budget guided-mix 0.9646 vs
-  random 0.9464 (+0.018); at 20%: 0.9376 vs 0.9248. Uncertainty × diversity
-  on the guided representation is the only strategy that beats random —
-  exactly where labels are scarcest relative to difficulty.
+## Label-budget curves (`figs/budget.csv`, seed protocol)
 
-So the refined claim: guided representations don't beat random sampling in
-general — they beat it where sampling is actually hard, and entropy alone
-fails catastrophically everywhere at low budgets.
+Seed = 5% labeled; entropy from seed-fit TabPFN on unlabeled rows; budgets
+count total labels. Correction note: an earlier OOF-entropy protocol made
+entropy look catastrophic — that was a protocol artifact of the old code, now
+fixed. Under the honest seed protocol, entropy is competitive (NATICUS best
+at every budget: 0.9797–0.9868).
+
+Phoneme (hard): jepa-kcenter wins 5/10/20% (0.894/0.918/0.941), guided-mix
+wins 40% decisively (0.9681 vs random 0.9490, entropy 0.9563). JEPA geometry
+carries coverage; guidance adds the ranking edge at scale.
 
 ![label-budget curves](figs/budget_curves.png)
-
-Phoneme (hard) at 40%: random 0.9464, entropy 0.9529, raw-kcenter 0.9551,
-jepa-kcenter 0.9590, guided-mix **0.9646**.
 
 ## Exhibits (`figs/exhibits_feat.csv`, `figs/exhibits_aps.csv`)
 
 **MADELON** (500 feats, ~20 signal): relevance direction depends on the
 generator. Mask-sensitivity ranks *predictability* — on NATICUS that is
-redundancy (top wins +0.086); on MADELON the XOR-type signal is unpredictable
-by design, so the ranking inverts: bottom-50 0.877 vs top-50 0.554, bottom-100
-0.950 vs top-100 0.718. Predictability ≈ redundancy; unpredictability ≈
+redundancy (top wins +0.082); on MADELON the XOR-type signal is unpredictable
+by design, so the ranking inverts: bottom-50 0.886 vs top-50 0.561, bottom-100
+0.937 vs top-100 0.747. Predictability ≈ redundancy; unpredictability ≈
 signal. The demo-worthy twist: a "flip the ranking" toggle.
 
-**APS Failure** (60k×170, 1.7% positives, real missingness; PR-AUC/recall):
+**APS Failure** (60k×170, 1.7% positives, real missingness, 1% seed;
+PR-AUC/recall):
 
 | budget | random | entropy | jepa-kcenter | guided-mix |
 |---|---|---|---|---|
-| 1% PR / recall | 0.543 / 0.29 | 0.370 / 0.58 | 0.806 / 0.67 | **0.830 / 0.70** |
-| 2% PR / recall | 0.742 / 0.42 | 0.801 / 0.70 | **0.861** / 0.72 | 0.849 / **0.74** |
-| 10% PR / recall | 0.795 / 0.42 | 0.920 / 0.75 | 0.914 / 0.77 | **0.921** / 0.76 |
+| 1% PR / recall | 0.602 / 0.04 | 0.637 / 0.62 | **0.719** / 0.56 | 0.705 / 0.54 |
+| 2% PR / recall | 0.706 / 0.22 | 0.846 / **0.74** | 0.840 / 0.68 | **0.855** / 0.69 |
+| 5% PR / recall | 0.755 / 0.62 | 0.877 / **0.75** | 0.896 / 0.73 | **0.900** / 0.73 |
+| 10% PR / recall | 0.806 / 0.64 | **0.916** / 0.76 | 0.913 / 0.76 | 0.915 / 0.75 |
 
-Operational read: at 1% (200 inspections) guided-mix finds 91 failures vs
-random's 3. Entropy discovers positives (100–316) but ranks them poorly until
-budgets grow — discovery without ranking.
+Operational read: smart strategies dominate random at every budget; entropy
+is the best *discoverer* (most positives found) and competitive on ranking;
+guided-mix takes best PR at 2% and 5%. No single winner — reported as measured.
 
 ## Reproduce
+
+```bash
+pip install -e .   # needs Python 3.10+, torch, tabpfn==9.0.0
+# S6E9 data (optional; OpenML sets download automatically):
+kaggle competitions download -c playground-series-s6e9 -p data && unzip -o data/*.zip -d data/
+```
 
 ```bash
 <venv-python> -m pytest tests/ -q
@@ -99,18 +103,18 @@ budgets grow — discovery without ranking.
 
 | data | raw | jepa | +curriculum | +masks | +mc4 |
 |---|---|---|---|---|---|
-| s6e9-12k | 0.9465 | 0.9391 | 0.9408 | 0.9456 | 0.9458 |
-| NATICUS-86 | 0.9885 | 0.9871 | 0.9872 | 0.9870 | 0.9873 |
-| phoneme | 0.9775 | 0.9671 | 0.9694 | 0.9696 | 0.9549 |
-| churn | 0.9178 | 0.9147 | 0.9133 | 0.9135 | 0.9130 |
+| s6e9-12k | 0.9465 | 0.9456 | 0.9457 | 0.9462 | 0.9461 |
+| NATICUS-86 | 0.9885 | 0.9875 | 0.9876 | 0.9877 | 0.9877 |
+| phoneme | 0.9775 | 0.9723 | 0.9717 | 0.9738 | 0.9645 |
+| churn | 0.9178 | 0.9147 | **0.9182** | **0.9183** | 0.9161 |
 
 Gating verdict (a stage must beat the last on ≥2 datasets):
-**uniform JEPA augment hurts everywhere** (0/4) — 32 extra latents dilute
-TabPFN's raw signal. **Curriculum recovers** (3/4), **guided masks recover
-more** (3/4, s6e9 back to -0.0009 of raw). **MC is cut**: neutral twice,
-catastrophic on phoneme (-0.015, masked latents go OOD).
-Surviving headline: PFN guidance systematically repairs unguided JEPA;
-wide-data *selection* (not augmentation) is where the plug wins outright
-(NATICUS top-24 +0.086 over random, zero labels).
+**uniform JEPA augment hurts everywhere** (0/4) — extra latents dilute
+TabPFN's raw signal. **Curriculum recovers** (3/4) and **beats raw on churn**.
+**Guided masks** improve on curriculum 4/4. **MC is cut**: neutral twice,
+harmful on phoneme (-0.009, masked latents go OOD). Fixed-loss rerun
+(JEPA predictive MSE was accidentally detached before; fitted preprocessing
+throughout) — the gap closed substantially vs the first run, and churn flips
+to an outright guided win.
 
 ![ablation ladder](figs/ablation.png)

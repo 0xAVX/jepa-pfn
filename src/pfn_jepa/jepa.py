@@ -17,17 +17,37 @@ import torch
 import torch.nn as nn
 
 
-def prep(df: pd.DataFrame) -> tuple[np.ndarray, list[str]]:
-    cols = df.columns.tolist()
+def prep_fit(df: pd.DataFrame) -> dict:
+    """Fitted transformer: store standardization + categorical maps."""
+    t = {"means": {}, "stds": {}, "maps": {}, "cols": df.columns.tolist()}
+    for c in t["cols"]:
+        v = df[c]
+        if str(v.dtype) in ("category", "object"):
+            t["maps"][c] = pd.Index(v.astype(str).unique())
+        else:
+            v = pd.to_numeric(v, errors="coerce")
+            t["means"][c], t["stds"][c] = float(v.mean()), float(v.std()) + 1e-6
+    return t
+
+
+def prep_apply(df: pd.DataFrame, t: dict) -> tuple[np.ndarray, list[str]]:
+    cols = t["cols"]
     out = np.zeros((len(df), len(cols)), dtype=np.float32)
     for j, c in enumerate(cols):
         v = df[c]
-        if str(v.dtype) in ("category", "object"):
-            out[:, j] = pd.factorize(v.astype(str))[0].astype(np.float32)
+        if c in t["maps"]:
+            out[:, j] = pd.Categorical(v.astype(str),
+                                       categories=t["maps"][c]).codes.astype(np.float32)
         else:
             v = pd.to_numeric(v, errors="coerce").fillna(0).astype(np.float32)
-            out[:, j] = (v - float(v.mean())) / (float(v.std()) + 1e-6)
+            out[:, j] = (v - t["means"][c]) / t["stds"][c]
     return out, cols
+
+
+def prep(df: pd.DataFrame) -> tuple[np.ndarray, list[str]]:
+    """Unsupervised convenience (fit+apply on same frame). For supervised
+    splits use prep_fit on train + prep_apply everywhere."""
+    return prep_apply(df, prep_fit(df))
 
 
 class Plug(nn.Module):
@@ -99,7 +119,7 @@ def train_plug(X: np.ndarray, epochs=15, batch=2048, d_lat=128, depth=2, width=2
             m_tgt = _draw_masks(xb.shape, feat_probs, g, dev)
             m_ctx = 1 - m_tgt
             pred, tgt = net(xb, xb, m_ctx, m_tgt)
-            loss = float(nn.functional.mse_loss(pred, tgt)) + vicreg(pred) \
+            loss = nn.functional.mse_loss(pred, tgt) + vicreg(pred) \
                 + vicreg(net.ctx(xb * m_ctx))
             opt.zero_grad()
             loss.backward()
