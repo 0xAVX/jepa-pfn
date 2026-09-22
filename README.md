@@ -1,5 +1,12 @@
 # PFN-JEPA: TabPFN-guided self-supervision for learning which samples matter
 
+> **Why this matters (20s):** TabPFN-3.5 is great, but labeling budgets are
+> finite. We show generic self-supervised latents *hurt* it (0/4 datasets),
+> then fix it by letting TabPFN's own uncertainty steer representation
+> learning — and prove the representation earns its keep choosing *which
+> samples and features deserve labels* (+0.082 feature selection, guided wins
+> on hard sample selection).
+
 We investigate whether JEPA-style self-supervised representations can improve
 TabPFN-3.5. Three measured findings:
 
