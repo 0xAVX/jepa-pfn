@@ -42,7 +42,9 @@ loop: TabPFN predictive uncertainty guides JEPA training (curriculum + masks),
 while acquisition deliberately separates task relevance from coverage — guided
 representations rank, unguided JEPA geometry covers. Central empirical point:
 **the same representation is harmful as a feature (0/4 augmentation) and
-useful as a geometry (+0.085 feature selection, guided-mix wins).**
+useful as a geometry — guided JEPA geometry for sample acquisition
+(guided-mix wins at 40%), and unguided label-free JEPA predictability for
+feature triage (+0.085, NATICUS top-24).**
 
 ## 4. Claims we do / do not make
 

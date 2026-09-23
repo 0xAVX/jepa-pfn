@@ -3,9 +3,11 @@
 > **Why this matters (20s):** TabPFN-3.5 is great, but labeling budgets are
 > finite. We show generic self-supervised latents *hurt* it (0/4 datasets),
 > then fix it by letting TabPFN's own uncertainty steer representation
-> learning — and prove the representation earns its keep choosing *which
-> samples and features deserve labels* (+0.085 feature selection; JEPA
-> diversity leads at small budgets, guided-mix wins at 40% on hard data).
+> learning — and show the representation earns its keep in two distinct
+> selection jobs: *which samples deserve labels* (JEPA diversity wins small
+> budgets, TabPFN-guided mix wins at 40%) and *which features deserve
+> capacity* (label-free JEPA predictability, +0.085 over random-24 on wide
+> NATICUS).
 
 ![strategies compared](figs/demo.gif)
 
@@ -20,9 +22,14 @@ TabPFN-3.5. Three measured findings:
    churn (0.9183 vs 0.9178). Guidance repairs compatibility; it does not turn
    latent augmentation into a universally better predictor. TabPFN is
    architecturally central: it drives the curriculum, the masks, and the selection.
-3. **Selection beats augmentation.** The guided representation is far more
-   useful for choosing *which samples to label* than for extra features:
-   NATICUS top-24 +0.085 over random with zero labels (`figs/jepa.csv`).
+3. **Selection beats augmentation.** Two separate selection results, with
+   different mechanisms:
+   - *Sample acquisition* (TabPFN-guided): JEPA geometry wins small phoneme
+     budgets (5/10/20%) and guided-mix wins at 40% (0.9681 vs 0.9490 random)
+     (`figs/budget.csv`).
+   - *Feature triage* (label-free JEPA predictability, no TabPFN guidance):
+     NATICUS top-24 +0.085 over random-24 with zero labels, while it fails
+     on narrow/all-signal data (`figs/jepa.csv`).
 
 MC latent completion was **removed from the architecture** (not just ablated):
 masked completions go out-of-distribution at inference (phoneme -0.015).
