@@ -7,6 +7,8 @@
 > samples and features deserve labels* (+0.085 feature selection; JEPA
 > diversity leads at small budgets, guided-mix wins at 40% on hard data).
 
+![strategies compared](figs/demo.gif)
+
 We investigate whether JEPA-style self-supervised representations can improve
 TabPFN-3.5. Three measured findings:
 
