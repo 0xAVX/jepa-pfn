@@ -26,7 +26,7 @@ ABL = [
     ("Guided feature masks", "✓ repaired 3/4", "good"),
     ("MC completion", "✗ removed after −0.015 on phoneme", "bad"),
     ("Guided-mix selection", "✓ only method beating random on hard data", "good"),
-    ("Feature selection", "✓ +0.082 over random on NATICUS", "good"),
+    ("Feature selection", "✓ +0.085 over random on NATICUS", "good"),
 ]
 
 app = Flask(__name__)

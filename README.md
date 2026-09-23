@@ -12,13 +12,15 @@ TabPFN-3.5. Three measured findings:
 
 1. **Uniform latent augmentation hurts.** Generic self-supervised latents are
    not automatically compatible with TabPFN's learned prior (0/4 datasets).
-2. **TabPFN-guided training repairs the failure.** Uncertainty curriculum +
-   sensitivity-guided masks match or beat raw on all 4 datasets — including
-   an outright win on churn (0.9183 vs 0.9178). TabPFN is causally central:
-   it drives the curriculum, the masks, and the selection.
+2. **TabPFN-guided training repairs toward raw.** Uniform augmentation hurts
+   across the benchmark; uncertainty curriculum + sensitivity-guided masks
+   systematically recover much of that loss — including an outright win on
+   churn (0.9183 vs 0.9178). Guidance repairs compatibility; it does not turn
+   latent augmentation into a universally better predictor. TabPFN is
+   causally central: it drives the curriculum, the masks, and the selection.
 3. **Selection beats augmentation.** The guided representation is far more
    useful for choosing *which samples to label* than for extra features:
-   NATICUS top-24 +0.082 over random with zero labels (`figs/jepa.csv`).
+   NATICUS top-24 +0.085 over random with zero labels (`figs/jepa.csv`).
 
 MC latent completion was **removed from the architecture** (not just ablated):
 masked completions go out-of-distribution at inference (phoneme -0.015).
@@ -71,7 +73,7 @@ carries coverage; guidance adds the ranking edge at scale.
 
 **MADELON** (500 feats, ~20 signal): relevance direction depends on the
 generator. Mask-sensitivity ranks *predictability* — on NATICUS that is
-redundancy (top wins +0.082); on MADELON the XOR-type signal is unpredictable
+redundancy (top wins +0.085); on MADELON the XOR-type signal is unpredictable
 by design, so the ranking inverts: bottom-50 0.886 vs top-50 0.561, bottom-100
 0.937 vs top-100 0.747. Predictability ≈ redundancy; unpredictability ≈
 signal. The demo-worthy twist: a "flip the ranking" toggle.
@@ -92,7 +94,7 @@ guided-mix takes best PR at 2% and 5%. No single winner — reported as measured
 
 ## Reproduce
 
-Fresh-env verified 2026-09-22 (clean venv, `pip install -e .`, witness suite 2 passed in 18s CPU; TabPFN weights from public HF, no keys).
+Fresh-env verified 2026-09-22 (clean venv, `pip install -e .`, JEPAFN smoke suite 2 passed in 85s CPU; TabPFN weights from public HF, no keys).
 
 ```bash
 pip install -e .   # needs Python 3.10+, torch, tabpfn==9.0.0
