@@ -4,8 +4,8 @@
 > finite. We show generic self-supervised latents *hurt* it (0/4 datasets),
 > then fix it by letting TabPFN's own uncertainty steer representation
 > learning — and prove the representation earns its keep choosing *which
-> samples and features deserve labels* (+0.082 feature selection, guided wins
-> on hard sample selection).
+> samples and features deserve labels* (+0.085 feature selection; JEPA
+> diversity leads at small budgets, guided-mix wins at 40% on hard data).
 
 We investigate whether JEPA-style self-supervised representations can improve
 TabPFN-3.5. Three measured findings:
@@ -17,7 +17,7 @@ TabPFN-3.5. Three measured findings:
    systematically recover much of that loss — including an outright win on
    churn (0.9183 vs 0.9178). Guidance repairs compatibility; it does not turn
    latent augmentation into a universally better predictor. TabPFN is
-   causally central: it drives the curriculum, the masks, and the selection.
+   architecturally central: it drives the curriculum, the masks, and the selection.
 3. **Selection beats augmentation.** The guided representation is far more
    useful for choosing *which samples to label* than for extra features:
    NATICUS top-24 +0.085 over random with zero labels (`figs/jepa.csv`).
